@@ -52,10 +52,30 @@ def long_time_task(name):
 
 if __name__ == '__main__':
     print('Parent process %s.'% os.getpid())
-    p = Pool(4)
+    p = Pool(4) #电脑上同时执行的进程数
     for i in range(5):
         p.apply_async(long_time_task, args = (i, ))
     print('Writing for all subprocesses done...')
     p.close()
     p.join()
     print('All subprocesses done.')
+#pool对象调用join()方法会等待所有的子进程执行完毕,调用join()之前必须先调用
+#close(),调用close()之后就不能继续添加新的Process了
+#pool的默认大小是CPU的核数
+
+##子进程
+
+import subprocess
+print('$ nslookup www.python.org')
+r = subprocess.call(['nslookup', 'www.python.org'])
+print('Exit code:', r)
+
+print('$ nslookup')
+p = subprocess.Popen(['nslookup'], stdin = subprocess.PIPE, stdout = subprocess.PIPE, stderr = subprocess.PIPE)
+output, err = p.communicate(b'set q = mx\npython.org\nexit\n')
+print(output.decode('utf-8'))
+print('Exit code:', p.returncode)
+#朕,没看明白这个子进程想干啥....先这样吧不想看
+
+##进程间通信
+#不写了!!!困
