@@ -78,4 +78,8 @@ print('Exit code:', p.returncode)
 #朕,没看明白这个子进程想干啥....先这样吧不想看
 
 ##进程间通信
+#在Unix/Linux下,multiprocessing模块封装了fork()调用,使我们不需要关注fork()细节
+#Win下没有fork, 因此multiprocessing需要模拟出fork的效果,父进程所有python
+#对象都必须通过pickle序列化再传到子进程去,所以如果multiprocessing在Win下
+#调用失败了,要先考虑是不是pickle失败了
 #不写了!!!困
