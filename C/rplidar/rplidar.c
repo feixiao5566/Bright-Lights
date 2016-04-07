@@ -78,9 +78,10 @@ int InitUart()
 
 }
 
-void WrietUart(int fd)
+void WrietUart(int fd, char *cmd, int size)
 {
     //int
+    write(fd, cmd, size);
 }
 
 void ReadUart(int fd)
@@ -99,7 +100,7 @@ void ReadUart(int fd)
     {
         printf("Read: %d bytes read.\n", ret);
     }
-    printf("%s\n", buff);
+    printf("%d\n", buff);
 }
 
 void CloseUart(int fd)
