@@ -1,5 +1,12 @@
 #include"rplidar.h"
 
+const char CMD_HEALTH[2]  = {0xA5,0x52};
+const char CMD_INFO[2]  = {0xA5,0x50};
+const char CMD_SCAN[2]  = {0xA5,0x20};
+const char FORCE_SCAN[2]  = {0xA5,0x21};
+const char CMD_STOP[2]  = {0xA5,0x25};
+const char CMD_RESET[2]  = {0xA5,0x40};
+
 int InitUart()
 {
     const char* serial_port[1];
@@ -37,14 +44,8 @@ int InitUart()
     tcflush(fd, TCIOFLUSH);
     status = tcsetattr(fd, TCSANOW, &options);
     //用于设置终端参数.TCSANOW：不等数据传输完毕就立即改变属性
-    /*
-    if(status != 0)
-    {
-        perror("open UART tcsetattr error\n");
-        //失败的errno值有错误信息
-        exit(-1);
-    }*/
-//设置串口格式为8N1
+    
+    //设置串口格式为8N1
     options.c_cflag &= ~CSIZE;
     options.c_cflag &= ~PARENB;
     options.c_cflag &= ~CSTOPB;
@@ -52,13 +53,7 @@ int InitUart()
     options.c_cflag |= CS8;
     options.c_iflag &= ~(INPCK | ISTRIP);
     tcflush(fd, TCIOFLUSH);
-    /*
-    status = tcsetattr(fd, TCSANOW, &options);
-    if(status != 0)
-    {
-        perror("tcsetattr error\n");
-        exit(-1);
-    }*/
+    
     options.c_cflag &= ~CRTSCTS;
     options.c_iflag &= ~(IXON | IXOFF | IXANY);
     options.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
@@ -72,7 +67,7 @@ int InitUart()
         perror("tcsetattr etc abnormal");
 //        exit(-1);
     }
-//    close(fd);
+    printf("Init!\n");
     printf("fd is: %d\n", fd);
     return fd;
 
@@ -81,28 +76,97 @@ int InitUart()
 void WrietUart(int fd, char *cmd, int size)
 {
     //int
-    write(fd, cmd, size);
+    int ret = 0;
+    ret = write(fd, cmd, size);
+    if(ret == -1)
+    {
+        perror("Write Faile.\n");
+    }
+    else
+    {
+        printf("%s cmd has been writen %d bytes.\n", cmd, ret);
+    }
 }
 
 void ReadUart(int fd)
 {
     int ret = 0;
-    unsigned char buff[1024];
+    int n = 0;
+    unsigned int buff[7] = {0};
 //    tcflush(fd, TCIOFLUSH);
         //清除终端未完成的输入/输出请求及数据
         //TCIOFLUSH清除所有正在发生的I/O数据
-    ret = read(fd, buff, 1024);
+    //TODO 读之前先清空buffer
+    ret = read(fd, buff, 7);
     if(ret == -1)
     {
-        perror("ReadFailed.\n");
+        perror("Read Failed.\n");
     }
     else
     {
-        printf("Read: %d bytes read.\n", ret);
+//        printf("Read: %d bytes read.\n", ret);
     }
-    printf("%d\n", buff);
+//    printf("Read Scan:\n");
+    for(n = 0; n<7; n++)
+    {
+        printf("0x%x ", buff[n]);
+    }
+    printf("\n");
+}
+void GetHealth(int fd)
+{
+    int health = 0;
+    unsigned int buff[5] = {'\0'};
+    printf("Check health.\n");
+    time_t startTs = 0, waitTime = 0;
+    startTs = GetTime_ms();
+    write(fd, CMD_HEALTH, 2);
+    while((waitTime = GetTime_ms() - startTs) < 5)//000)
+    {
+        printf("before: %ld\n", startTs);
+        printf("now: %ld\n", GetTime_ms());
+        printf("waitTime: %ld\n", waitTime);
+        //TODO 读之前先清空buffer
+        read(fd, buff, 5);
+        switch(buff[2])
+        {
+            case 0: printf("device health!\n");
+                return NULL;//break;
+            case 1: printf("Health Warning: %x, %x.\n", buff[3], buff[4]);
+                return NULL;//break;
+            case 2: printf("Health Error: %x, %x.\n", buff[3], buff[4]);
+                return NULL;//break;
+            default:perror("Health Status error\n");
+        }
+        printf("in while\n");
+    }//end of while
+    printf("health timoout\n");
+    //TODO return timeout code
+    // And then add 保护性停机,不能进行scan
 }
 
+time_t GetTime_ms()
+{
+    struct timespec time1 = {0, 0};   
+    
+    clock_gettime(CLOCK_REALTIME, &time1); 
+    //typedef long     time_t;        
+    printf("CLOCK_REALTIME: %ld, %ld\n", time1.tv_sec, time1.tv_nsec);
+    //L是长整型的标识
+    return time1.tv_sec*1000L + time1.tv_nsec/1000000L;
+}
+void RplidarScan(fd)
+{
+    write(fd, CMD_SCAN, 2);
+//    printf("start scan\n");
+    ReadUart(fd);
+}
+void StopScan(int fd)
+{
+    write(fd, CMD_STOP, 2);
+    printf("stop scan\n");
+    ReadUart(fd, 7);
+}
 void CloseUart(int fd)
 {
     close(fd);
