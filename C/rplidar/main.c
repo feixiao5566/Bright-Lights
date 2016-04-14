@@ -16,7 +16,8 @@ void main()
     
     fd = InitUart();
     printf("Init!\n");
-    GetHealth(fd);
+    //gethealth的时候挺容易失败的?
+    GetHealth(fd)
     //TODO 检测数据接受状态,判断保护性停机
     
     
@@ -43,7 +44,8 @@ void main()
     printf("start scan\n");
     while(1)
     {
-        ReadUart(fd, 5);
+//        ReadUart(fd, 5);
+        ReadUart(fd);
     }
     StopScan(fd);
     CloseUart(fd);

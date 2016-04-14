@@ -92,12 +92,12 @@ void ReadUart(int fd)
 {
     int ret = 0;
     int n = 0;
-    unsigned int buff[7] = {0};
+    unsigned int buff[26] = {0};
 //    tcflush(fd, TCIOFLUSH);
         //清除终端未完成的输入/输出请求及数据
         //TCIOFLUSH清除所有正在发生的I/O数据
     //TODO 读之前先清空buffer
-    ret = read(fd, buff, 7);
+    ret = read(fd, buff, 26);
     if(ret == -1)
     {
         perror("Read Failed.\n");
@@ -107,16 +107,18 @@ void ReadUart(int fd)
 //        printf("Read: %d bytes read.\n", ret);
     }
 //    printf("Read Scan:\n");
-    for(n = 0; n<7; n++)
+    for(n = 0; n<26; n++)
     {
         printf("0x%x ", buff[n]);
     }
+    //输出的数据是低尾端(小端的),实际使用的时候再处理转换吧
     printf("\n");
 }
-void GetHealth(int fd)
+int GetHealth(int fd)
 {
     int health = 0;
-    unsigned int buff[5] = {'\0'};
+    int i = 0;
+    unsigned int buff[5] = {0};
     printf("Check health.\n");
     time_t startTs = 0, waitTime = 0;
     startTs = GetTime_ms();
@@ -127,15 +129,34 @@ void GetHealth(int fd)
         printf("now: %ld\n", GetTime_ms());
         printf("waitTime: %ld\n", waitTime);
         //TODO 读之前先清空buffer
-        read(fd, buff, 5);
-        switch(buff[2])
+        for(i = 0; i < 5; i++)
+                buff[i] = 0;
+        printf("before read: buff[0] = %x buff[1] = %x \n", buff[0], buff[1]);
+        read(fd, buff, 8);//8代表是8位
+        //先判断设备健康的应答代码
+        printf("buff[0] = %x buff[1] = %x \n", buff[0], buff[1]);
+        while((buff[0] != 0x35aa5))// || (buff[1] != 0x60000))
+        { 
+            for(i = 0; i < 5; i++)
+                buff[i] = 0;
+            write(fd, CMD_HEALTH, 2);
+            for(i = 0; i < 1000; i++)
+                ;
+            
+            read(fd, buff, 5);
+            printf("while:buff[0] = %x buff[1] = %x \n", buff[0], buff[1]);
+            
+            
+        }
+        
+        switch(buff[1] & 0x000f00)//判断返回值
         {
             case 0: printf("device health!\n");
-                return NULL;//break;
-            case 1: printf("Health Warning: %x, %x.\n", buff[3], buff[4]);
-                return NULL;//break;
-            case 2: printf("Health Error: %x, %x.\n", buff[3], buff[4]);
-                return NULL;//break;
+                return 0;//break;
+            case 1: printf("Health Warning: %x.\n", buff[1] & 0x00f000);
+                return 1;//break;
+            case 2: printf("Health Error: %x.\n", buff[1] & 0x0f0000);
+                return 2;//break;
             default:perror("Health Status error\n");
         }
         printf("in while\n");
@@ -143,6 +164,7 @@ void GetHealth(int fd)
     printf("health timoout\n");
     //TODO return timeout code
     // And then add 保护性停机,不能进行scan
+    return -1;
 }
 
 time_t GetTime_ms()
@@ -165,7 +187,8 @@ void StopScan(int fd)
 {
     write(fd, CMD_STOP, 2);
     printf("stop scan\n");
-    ReadUart(fd, 7);
+//    ReadUart(fd, 7);
+    ReadUart(fd);
 }
 void CloseUart(int fd)
 {

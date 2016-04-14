@@ -9,6 +9,7 @@
 #include<termios.h>
 #include<errno.h>
 #include<time.h>
+#include<string.h>
 
 /*
 const char CMD_HEALTH[2]  = {0xA5,0x52};
@@ -23,7 +24,7 @@ const char CMD_RESET[2]  = {0xA5,0x40};
 int InitUart();
 void WrietUart(int fd, char *cmd, int size);
 void ReadUart(int fd);
-void GetHealth(int fd);
+int GetHealth(int fd);
 time_t GetTime_ms();
 void StopScan(int fd);
 void CloseUart(int fd);
