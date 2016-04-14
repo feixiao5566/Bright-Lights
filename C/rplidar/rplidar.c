@@ -92,11 +92,13 @@ void ReadUart(int fd)
 {
     int ret = 0;
     int n = 0;
-    unsigned int buff[26] = {0};
+    unsigned int *buff = NULL;
+    buff = malloc(26);
 //    tcflush(fd, TCIOFLUSH);
         //清除终端未完成的输入/输出请求及数据
         //TCIOFLUSH清除所有正在发生的I/O数据
     //TODO 读之前先清空buffer
+    buff = memset(buff, 0, 26);
     ret = read(fd, buff, 26);
     if(ret == -1)
     {
@@ -109,10 +111,12 @@ void ReadUart(int fd)
 //    printf("Read Scan:\n");
     for(n = 0; n<26; n++)
     {
-        printf("0x%x ", buff[n]);
+        if(buff[n] != 0)
+            printf("0x%x ", buff[n]);
     }
     //输出的数据是低尾端(小端的),实际使用的时候再处理转换吧
     printf("\n");
+    free(buff);
 }
 int GetHealth(int fd)
 {
@@ -123,11 +127,9 @@ int GetHealth(int fd)
     time_t startTs = 0, waitTime = 0;
     startTs = GetTime_ms();
     write(fd, CMD_HEALTH, 2);
-    while((waitTime = GetTime_ms() - startTs) < 5)//000)
+    usleep(1000);
+//    while((waitTime = GetTime_ms() - startTs) < 5)//000)
     {
-        printf("before: %ld\n", startTs);
-        printf("now: %ld\n", GetTime_ms());
-        printf("waitTime: %ld\n", waitTime);
         //TODO 读之前先清空buffer
         for(i = 0; i < 5; i++)
                 buff[i] = 0;
@@ -135,24 +137,37 @@ int GetHealth(int fd)
         read(fd, buff, 8);//8代表是8位
         //先判断设备健康的应答代码
         printf("buff[0] = %x buff[1] = %x \n", buff[0], buff[1]);
-        while((buff[0] != 0x35aa5))// || (buff[1] != 0x60000))
-        { 
+        while((buff[0] != 0x35aa5)&&((waitTime = GetTime_ms() - startTs) < 5))//||(buff[1]!= 0x60000))
+        {
+        /*在读取的过程中会遇到
+            buff[0] = 35aa5 buff[1] = 0 
+            buff[0] = 600 buff[1] = 0
+            不知道是什么影响了？*/
+            
+            printf("before: %ld\n", startTs);
+            printf("now: %ld\n", GetTime_ms());
+            printf("waitTime: %ld\n", waitTime);
             for(i = 0; i < 5; i++)
                 buff[i] = 0;
             write(fd, CMD_HEALTH, 2);
-            for(i = 0; i < 1000; i++)
-                ;
+            usleep(1000);
             
             read(fd, buff, 5);
             printf("while:buff[0] = %x buff[1] = %x \n", buff[0], buff[1]);
-            
-            
         }
         
         switch(buff[1] & 0x000f00)//判断返回值
         {
-            case 0: printf("device health!\n");
+            case 0:
+            {
+                printf("device health!\n");
+                /*if((buff[1]!= 0x0))
+                {
+                    read(fd, buff, 5);
+                    printf("while:buff[0] = %x buff[1] = %x \n", buff[0], buff[1]);
+                }*/
                 return 0;//break;
+            }
             case 1: printf("Health Warning: %x.\n", buff[1] & 0x00f000);
                 return 1;//break;
             case 2: printf("Health Error: %x.\n", buff[1] & 0x0f0000);
@@ -160,6 +175,7 @@ int GetHealth(int fd)
             default:perror("Health Status error\n");
         }
         printf("in while\n");
+        
     }//end of while
     printf("health timoout\n");
     //TODO return timeout code
@@ -179,15 +195,24 @@ time_t GetTime_ms()
 }
 void RplidarScan(fd)
 {
+    StopScan(fd); //非常重要force the previous operation to stop
     write(fd, CMD_SCAN, 2);
 //    printf("start scan\n");
-    ReadUart(fd);
+//    ReadUart(fd);
+/*    unsigned char *p = (unsigned char*)&i; 
+    unsigned int num,num1,num2,num3,num4;
+    num1=(unsigned int)(*p)<<24;
+    num2=((unsigned int)*(p+1))<<16;
+    num3=((unsigned int)*(p+2))<<8;
+    num4=((unsigned int)*(p+3));
+    num=num1+num2+num3+num4;*/
 }
 void StopScan(int fd)
 {
     write(fd, CMD_STOP, 2);
     printf("stop scan\n");
 //    ReadUart(fd, 7);
+    usleep(1000);
     ReadUart(fd);
 }
 void CloseUart(int fd)

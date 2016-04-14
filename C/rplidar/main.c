@@ -17,29 +17,9 @@ void main()
     fd = InitUart();
     printf("Init!\n");
     //gethealth的时候挺容易失败的?
-    GetHealth(fd)
+    GetHealth(fd);//√
     //TODO 检测数据接受状态,判断保护性停机
-    
-    
-    
-/*    write(fd, CMD_HEALTH, 2);
-    ReadUart(fd);
-    write(fd, CMD_INFO, 2);
-    printf("device info\n");
-    ReadUart(fd);
-    write(fd, CMD_SCAN, 2);
-    printf("start scan\n");
-    ReadUart(fd);
-    for(i = 0; i<10000; i++)
-    {
-        ;
-    }
-    write(fd, CMD_STOP, 2);
-    printf("stop scan\n");
-    ReadUart(fd);*/
-/*    before = GetTime_ms();
-    printf("before: %ld\n", before);*/
-            //发送scan请求
+
     RplidarScan(fd);
     printf("start scan\n");
     while(1)
