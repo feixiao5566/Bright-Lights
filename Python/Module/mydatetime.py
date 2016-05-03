@@ -52,5 +52,40 @@ from datetime import datetime, timedelta, timezone
 tz_utc_8 = timezone(timedelta(hours = 8))#创建时区UTC+8:00
 now = datetime.now()
 print(now)
+dt = now.replace(tzinfo = tz_utc_8)
+print(dt)
+
+#时区转换
+#可以通过utcnow()拿到当前的UTC时间,再转换为任意时区的时间
+
+#拿到UTC时间,并强制设置时区为UTC+0:00:
+utc_dt = datetime.utcnow().replace(tzinfo = timezone.utc)
+print(utc_dt)
+#astimezone()将转换时区为北京时间
+bj_dt = utc_dt.astimezone(timezone(timedelta(hours = 8)))
+print(bj_dt)
+#astimezone()就爱那个转换时区为东京时间:
+tokyo_dt = utc_dt.astimezone(timezone(timedelta(hours = 9)))
+print(tokyo_dt)
+#astimezone()将bj_dt转换为东京时间
+tokyo_dt2 = bj_dt.astimezone(timezone(timedelta(hours = 9)))
+print(tokyo)
+
+#时区转换的关键在于,拿到一个datetime时,要获知其正确的时区,
+#然后强制设置时区,作为基准时间
+#利用带时区的datetime,通过astimezone()方法,可以转换到任意时区.
+
+#注:不是必须从UTC+0:00时区转换到其他时区,任何带时区的datetime
+#都可以正确转换,例如上面bj_time到tokyo_dt的转换
+
+
+
+
+
+##datetime表示的时间需要时区信息才能确定一个特定的时间,否则视为
+#       本地时间
+#如果要存储datetime,最佳方法是将其转换为timestamp再存储,因为
+#       timestamp的值与时区完全无关
+
 
 
