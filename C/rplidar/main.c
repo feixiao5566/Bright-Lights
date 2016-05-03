@@ -13,19 +13,35 @@ void main()
 {
     int fd = 0;
     int i = 0;
+    int n = 0;
     
     fd = InitUart();
     printf("Init!\n");
+    RplidarInfo(fd);
     //gethealth的时候挺容易失败的?
     GetHealth(fd);//√
     //TODO 检测数据接受状态,判断保护性停机
 
     RplidarScan(fd);
     printf("start scan\n");
+    n = 0;
     while(1)
     {
 //        ReadUart(fd, 5);
-        ReadUart(fd);
+        i = ReadUart(fd);
+        n++;
+        printf("read U %d, n = %d\n", i, n);
+        if(n >= 50)
+        {
+            n = 0;
+            //RplidarReset(fd);
+            //StopScan(fd);
+            //force_scan();
+/*            usleep(1000);
+            GetHealth(fd);
+            printf("Jevens!\n");
+            RplidarScan(fd);*/
+        }
     }
     StopScan(fd);
     CloseUart(fd);

@@ -88,7 +88,7 @@ void WrietUart(int fd, char *cmd, int size)
     }
 }
 
-void ReadUart(int fd)
+int ReadUart(int fd)
 {
     int ret = 0;
     int n = 0;
@@ -117,6 +117,7 @@ void ReadUart(int fd)
     //输出的数据是低尾端(小端的),实际使用的时候再处理转换吧
     printf("\n");
     free(buff);
+    return ret;
 }
 int GetHealth(int fd)
 {
@@ -206,6 +207,24 @@ void RplidarScan(fd)
     num3=((unsigned int)*(p+2))<<8;
     num4=((unsigned int)*(p+3));
     num=num1+num2+num3+num4;*/
+}
+void RplidarReset(fd)
+{
+    usleep(1000);
+    write(fd, CMD_RESET, 2);
+    usleep(1000);
+}
+void RplidarInfo(fd)
+{
+    write(fd, CMD_INFO, 2);
+    usleep(1000);
+    ReadUart(fd);
+}
+void force_scan(fd)
+{
+    write(fd, FORCE_SCAN, 2);
+    usleep(1000);
+    ReadUart(fd);
 }
 void StopScan(int fd)
 {
