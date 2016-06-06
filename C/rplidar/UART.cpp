@@ -66,6 +66,7 @@ void WrietUart(int fd, char *sendmsg, int size)
 {
     int ret = 0;
     ret = write(fd, sendmsg, size);
+    
     if(ret == -1)
     {
         perror("UART:Write Faile.\n");
@@ -73,7 +74,7 @@ void WrietUart(int fd, char *sendmsg, int size)
     }
     else
     {
-        std::cout << "%s cmd has been writen %d bytes.\n" << sendmsg << ret;
+        std::cout << sendmsg[9]<< " cmd has been writen "<< ret<<" bytes.\n"  ;
     }
 }
 
@@ -82,12 +83,14 @@ int ReadUart(int fd, int size, unsigned int *buff)
     int ret = 0;
     int n = 0;
     buff = (unsigned int *)memset(buff, 0, size);
+    
     ret = read(fd, buff, size);
+    std::cout<<"read ret\n";
     if(ret == -1)
     {
         perror("UART Read Failed.\n");
     }
-
+    std::cout<<"read ret:"<<ret<<std::endl;
     std::cout << std::endl;
     
     return ret;

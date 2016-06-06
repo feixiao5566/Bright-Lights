@@ -3,6 +3,7 @@
  */
 #pragma once
 #include<iostream>
+#include<stdio.h>
 #include<sys/types.h>
 #include<sys/ioctl.h>
 #include<sys/time.h>
@@ -12,7 +13,7 @@
 #include<errno.h>
 #include<time.h>
 #include<string.h>
-#include<stdlib.h> 　　
+#include<stdlib.h>
 #include<unistd.h>
 
 int InitUart(char *port, int baudrate);
